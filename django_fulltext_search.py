@@ -11,9 +11,10 @@ class SearchQuerySet(models.query.QuerySet):
     QuerySet which supports MySQL and MariaDB full-text search.
     '''
 
-    def __init__(self, fields=None, **kwargs):
+    def __init__(self, fields=None, search_mode=None, **kwargs):
         super(SearchQuerySet, self).__init__(**kwargs)
         self.search_fields = fields
+        self.search_mode = search_mode
 
     def get_query_set(self, query, columns, mode):
         '''
@@ -86,6 +87,9 @@ class SearchQuerySet(models.query.QuerySet):
         # for using at-signs (@) in search queries, because we don't enable the
         # boolean mode in case no other operator was found.
         #
+        
+        if mode is None:
+            mode = self.search_mode
 
         # Set boolean mode if mode argument is set to None.
         if mode is None and any(x in query for x in '+-><()*"'):
@@ -134,15 +138,16 @@ class SearchManager(models.Manager):
 
     query_set = SearchQuerySet
 
-    def __init__(self, fields=None):
+    def __init__(self, fields=None, search_mode=None):
         super(SearchManager, self).__init__()
         self.search_fields = fields
+        self.search_mode = search_mode
 
     def get_query_set(self):
         '''
         Returns the query set.
         '''
-        return self.query_set(model=self.model, fields=self.search_fields)
+        return self.query_set(model=self.model, fields=self.search_fields, search_mode=self.search_mode)
 
     def search(self, query, **kwargs):
         '''
