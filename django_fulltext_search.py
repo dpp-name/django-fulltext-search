@@ -22,10 +22,11 @@ class SearchQuerySet(models.query.QuerySet):
         '''
         # Create the WHERE MATCH() ... AGAINST() expression.
         fulltext_columns = ', '.join(columns)
-        where_expression = ('MATCH({}) AGAINST("%s" {})'.format(fulltext_columns, mode))
+        where_expression = ('MATCH({}) AGAINST(%s {})'.format(fulltext_columns, mode))
 
         # Get query set via extra() method.
-        return self.extra(where=[where_expression], params=[query])
+        return self.extra(select={'fulltext_score': where_expression}, select_params=[query],
+                          where=[where_expression], params=[query])
 
     def search(self, query, fields=None, mode=None):
         '''
@@ -87,7 +88,7 @@ class SearchQuerySet(models.query.QuerySet):
         # for using at-signs (@) in search queries, because we don't enable the
         # boolean mode in case no other operator was found.
         #
-        
+
         if mode is None:
             mode = self.search_mode
 
